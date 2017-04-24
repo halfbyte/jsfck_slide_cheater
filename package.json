@@ -1,0 +1,16 @@
+{
+  "name": "jsconf_slide_cheater",
+  "version": "1.0.0",
+  "description": "generates slides from jsfuck and a simple font",
+  "main": "index.js",
+  "author": "Jan Krutisch",
+  "license": "MIT",
+  "scripts": {
+    "start": "node index.js"
+  },
+  "dependencies": {
+    "js-yaml": "^3.8.3",
+    "jsfuck": "^0.4.0",
+    "pngjs": "^3.0.1"
+  }
+}
