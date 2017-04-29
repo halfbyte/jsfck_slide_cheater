@@ -6,6 +6,7 @@ const LINE_LENGTH = 171;
 const HEIGHT = 60;
 const ASCII_A = 'A'.charCodeAt(0);
 const SPACING = 3;
+const SPACE_WIDTH = 5;
 const FONT_CHAR_HEIGHT = 11
 var fontpixels;
 var pixelCounts;
@@ -78,7 +79,11 @@ function pixelsPerLine(line) {
 
 function textLength(line) {
   var len = 0;
-  Array.from(line).forEach((char) => {    
+  Array.from(line).forEach((char) => {
+    if (char === ' ') {
+      len += SPACE_WIDTH;
+      return;
+    }
     var charPos = char.toUpperCase().charCodeAt(0) - ASCII_A;
     len += fontCharWidths[charPos] || 0;
   })
@@ -91,8 +96,12 @@ function charOffsets(line) {
   var offset = 0;
   Array.from(line).forEach((char) => {    
     offsets.push(offset);
-    var charPos = char.toUpperCase().charCodeAt(0) - ASCII_A;
-    offset += fontCharWidths[charPos] || 0;
+    if (char === ' ') {
+      offset += SPACE_WIDTH;
+    } else {
+      var charPos = char.toUpperCase().charCodeAt(0) - ASCII_A;
+      offset += fontCharWidths[charPos] || 0;      
+    }
     offset += SPACING;
   })
   return offsets;
@@ -142,14 +151,15 @@ function convertLine(line) {
       if (cols >= startX && cols < endX && rows >= startY && rows < endY) {
         var charIndex = findChar(offsets, cols - startX)
         var charToPaint = line[charIndex].toUpperCase();
-        
-        var charOffset = charToPaint.charCodeAt(0) - ASCII_A;
-        
-        var xOffsetWithinChar = Math.floor((cols - startX) - offsets[charIndex]); 
-        var yOffsetWithinChar = Math.floor(yOffsetWithinChar = (rows - startY) % FONT_CHAR_HEIGHT) + 1; // remove measuring pixel
-        if (xOffsetWithinChar < fontCharWidths[charOffset]) {
-          paintPixel = fontpixels.data[yOffsetWithinChar * fontpixels.width * 4 + (fontCharOffsets[charOffset] + xOffsetWithinChar) * 4] > 0;
-        }        
+        if (charToPaint !== ' ') {          
+          var charOffset = charToPaint.charCodeAt(0) - ASCII_A;
+          
+          var xOffsetWithinChar = Math.floor((cols - startX) - offsets[charIndex]); 
+          var yOffsetWithinChar = Math.floor(yOffsetWithinChar = (rows - startY) % FONT_CHAR_HEIGHT) + 1; // remove measuring pixel
+          if (xOffsetWithinChar < fontCharWidths[charOffset]) {
+            paintPixel = fontpixels.data[yOffsetWithinChar * fontpixels.width * 4 + (fontCharOffsets[charOffset] + xOffsetWithinChar) * 4] > 0;
+          }
+        }
       }
       if (paintPixel) {
         result += fuck[codePointer++] || "";

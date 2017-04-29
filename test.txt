@@ -1,3 +1,6 @@
-claim
 aesthetics
-comprehension
+motivation
+language
+style
+code
+thanks
