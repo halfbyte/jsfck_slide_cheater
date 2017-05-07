@@ -1,8 +1,8 @@
 const fs = require('fs');
 const {PNG} = require('pngjs');
 const {JSFuck} = require('jsfuck');
-const inputFile = process.argv[2];
-const LINE_LENGTH = 171;
+const inputString = process.argv[2];
+const LINE_LENGTH = 221;
 const HEIGHT = 60;
 const ASCII_A = 'A'.charCodeAt(0);
 const SPACING = 3;
@@ -19,10 +19,11 @@ function start() {
   fontpixels = PNG.sync.read(data);
   [fontCharOffsets, fontCharWidths] = readFontMetrics(fontpixels);
   pixelCounts = makePixelCounts(fontpixels);
-  var lineReader = require('readline').createInterface({
-    input: fs.createReadStream(inputFile)
-  });
-  lineReader.on('line', convertLine);  
+  convertLine(inputString);
+  // var lineReader = require('readline').createInterface({
+  //   input: fs.createReadStream(inputFile)
+  // });
+  //lineReader.on('line', convertLine);
 }
 
 function readFontMetrics(fontPixels) {
@@ -60,17 +61,18 @@ function makePixelCounts(fontPixels) {
       for(x=0;x<fontCharWidths[c];x++) {
         if (fontPixels.data[y * fontPixels.width * 4 + (fontCharOffsets[c] + x) * 4] === 0) {
           localCount++;
-        }        
+        }
       }
     }
     pc.push(localCount);
   }
+  console.log("PIXELCOUNT", pc, pc.length);
   return pc;
 }
 
 function pixelsPerLine(line) {
   var sum = 0;
-  Array.from(line).forEach((char) => {    
+  Array.from(line).forEach((char) => {
     var charPos = char.toUpperCase().charCodeAt(0) - ASCII_A;
     sum += pixelCounts[charPos] || 0;
   })
@@ -94,13 +96,13 @@ function textLength(line) {
 function charOffsets(line) {
   var offsets = [];
   var offset = 0;
-  Array.from(line).forEach((char) => {    
+  Array.from(line).forEach((char) => {
     offsets.push(offset);
     if (char === ' ') {
       offset += SPACE_WIDTH;
     } else {
       var charPos = char.toUpperCase().charCodeAt(0) - ASCII_A;
-      offset += fontCharWidths[charPos] || 0;      
+      offset += fontCharWidths[charPos] || 0;
     }
     offset += SPACING;
   })
@@ -123,14 +125,15 @@ function convertLine(line) {
   const fullLine = `console.log("${line}")`;
   var fuck = JSFuck.encode(fullLine, true);
   console.log(fuck.length);
+  line = line.replace(/[æÆ]/, '[')
   var codePointer = 0;
   var rows = 0;
   var result = "";
-  
+
   var darkPixels = pixelsPerLine(line);
   var lines = Math.floor((fuck.length + darkPixels) / LINE_LENGTH);
   console.log(lines);
-  
+
   var textLen = textLength(line);
   var startX = Math.floor((LINE_LENGTH - textLen) / 2);
   var startY = (lines - FONT_CHAR_HEIGHT) / 2;
@@ -138,12 +141,12 @@ function convertLine(line) {
   var endY = startY + FONT_CHAR_HEIGHT;
   var offsets = charOffsets(line);
   console.log("OFFSETS", offsets);
-  
-  
+
+
   console.log("text starts at x:", startX, endX, "y: ", startY, endY, line, line.length, darkPixels, lines);
-  
-  
-  
+
+
+
   while(codePointer < fuck.length) {
     var cols;
     for(cols = 0; cols<LINE_LENGTH; cols++) {
@@ -151,10 +154,10 @@ function convertLine(line) {
       if (cols >= startX && cols < endX && rows >= startY && rows < endY) {
         var charIndex = findChar(offsets, cols - startX)
         var charToPaint = line[charIndex].toUpperCase();
-        if (charToPaint !== ' ') {          
+        if (charToPaint !== ' ') {
           var charOffset = charToPaint.charCodeAt(0) - ASCII_A;
-          
-          var xOffsetWithinChar = Math.floor((cols - startX) - offsets[charIndex]); 
+
+          var xOffsetWithinChar = Math.floor((cols - startX) - offsets[charIndex]);
           var yOffsetWithinChar = Math.floor(yOffsetWithinChar = (rows - startY) % FONT_CHAR_HEIGHT) + 1; // remove measuring pixel
           if (xOffsetWithinChar < fontCharWidths[charOffset]) {
             paintPixel = fontpixels.data[yOffsetWithinChar * fontpixels.width * 4 + (fontCharOffsets[charOffset] + xOffsetWithinChar) * 4] > 0;
